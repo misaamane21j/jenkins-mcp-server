@@ -1,0 +1,144 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Initialize Project Structure and Dependencies",
+        "description": "Set up the complete TypeScript Node.js project structure with all required dependencies and configuration files",
+        "details": "Create the directory structure as specified in the PRD. Initialize package.json with exact dependencies: @modelcontextprotocol/sdk, jenkins@1.1.0, express@4.18.2, redis@4.6.13, winston@3.11.0, joi@17.12.2, dotenv@16.4.5, axios@1.6.7. Add devDependencies: @types/node@20.11.19, @types/express@4.17.21, typescript@5.3.3, jest@29.7.0, @types/jest@29.5.12, nodemon@3.0.3. Create tsconfig.json with proper TypeScript configuration. Set up .env.example with all required environment variables. Create .gitignore for Node.js projects.",
+        "testStrategy": "Verify package.json dependencies match PRD specifications exactly. Ensure TypeScript compilation works. Validate directory structure matches the specified layout.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Implement Environment Configuration and Types",
+        "description": "Create environment configuration management and define all TypeScript interfaces for Jenkins API, MCP, and webhook types",
+        "details": "Implement src/config/environment.ts to load and validate environment variables using joi validation. Create src/types/jenkins.ts with interfaces for Jenkins API responses, job parameters, build information. Create src/types/mcp.ts for MCP tool schemas and responses. Create src/types/webhook.ts for Jenkins webhook payload structures. Ensure all environment variables from PRD are properly typed and validated.",
+        "testStrategy": "Unit tests for environment validation with valid/invalid configs. Type checking ensures all interfaces are properly defined. Test environment loading with missing required variables.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Create Jenkins API Client Service",
+        "description": "Implement the Jenkins client service for API authentication, job triggering, and data retrieval",
+        "details": "Implement src/services/jenkins-client.ts using the jenkins npm package. Support both username/password and API token authentication. Implement methods: authenticateWithJenkins(), triggerParameterizedBuild(jobName, parameters), getJobInfo(jobName), getBuildInfo(jobName, buildNumber), listJobs(filter, includeDisabled), getJobParameters(jobName). Handle Jenkins API errors properly with meaningful error messages. Use axios for HTTP requests with proper timeout and retry logic.",
+        "testStrategy": "Unit tests with mocked Jenkins API responses. Integration tests against actual Jenkins instance. Error handling tests for network failures and authentication errors.",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Implement Redis Job Tracker Service",
+        "description": "Create job tracking service using Redis to store callback information and track job status changes",
+        "details": "Implement src/services/job-tracker.ts with Redis client setup. Create methods: storeJobCallback(jobName, buildNumber, callbackInfo), getJobCallback(jobName, buildNumber), updateJobStatus(jobName, buildNumber, status), cleanupCompletedJobs(). Use Redis with proper connection handling, reconnection logic, and error handling. Store callback information including slackChannel, slackThreadTs, and slackUserId as specified in PRD.",
+        "testStrategy": "Unit tests with Redis mock. Integration tests with actual Redis instance. Test data persistence and cleanup functionality. Verify callback information storage and retrieval.",
+        "priority": "medium",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Create Logging and Utilities",
+        "description": "Implement logging utility, parameter validation, and error handling utilities",
+        "details": "Implement src/utils/logger.ts using winston with configurable log levels (info, debug, error, warn). Support console and file outputs. Create src/utils/validation.ts with joi schema validation for MCP tool inputs. Implement src/utils/error-handler.ts with custom error classes for Jenkins API errors, MCP errors, and validation errors. Include proper error serialization for MCP responses.",
+        "testStrategy": "Unit tests for logger configuration and output. Validation tests with valid/invalid inputs. Error handling tests for different error scenarios.",
+        "priority": "medium",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Implement MCP Tools",
+        "description": "Create all four MCP tools: trigger_jenkins_job, get_job_status, list_jenkins_jobs, and get_job_parameters",
+        "details": "Implement src/server/tools/trigger-job.ts with schema validation for jobName, parameters, and callbackInfo. Store callback info in Redis and trigger Jenkins job. Implement src/server/tools/job-status.ts to query job and build status. Implement src/server/tools/list-jobs.ts with optional filtering and disabled job inclusion. Implement src/server/tools/get-job-parameters.ts to retrieve job parameter definitions. Each tool must validate inputs using joi schemas and return proper MCP responses.",
+        "testStrategy": "Unit tests for each tool with mocked dependencies. Integration tests with actual Jenkins API. Validate input schemas and error responses. Test callback information storage.",
+        "priority": "high",
+        "dependencies": [
+          3,
+          4,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Create Webhook Handler Service",
+        "description": "Implement webhook endpoints to receive Jenkins build notifications and forward status updates",
+        "details": "Implement src/services/webhook-handler.ts with Express server setup. Create POST /webhook/jenkins endpoint to receive Jenkins notifications. Parse webhook payloads and extract build information. Retrieve callback information from Redis and send HTTP notifications to SLACK_WEBHOOK_URL. Implement src/middleware/webhook-auth.ts for webhook signature verification using WEBHOOK_SECRET. Add GET /health and GET /tools endpoints as specified.",
+        "testStrategy": "Unit tests for webhook payload processing. Integration tests for HTTP endpoints. Test webhook authentication and signature verification. Mock Slack AI Agent webhook calls.",
+        "priority": "high",
+        "dependencies": [
+          4,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Implement Main MCP Server",
+        "description": "Create the main MCP server implementation with tool registration and communication handling",
+        "details": "Implement src/server/mcp-server.ts using @modelcontextprotocol/sdk. Register all four MCP tools with proper schemas. Set up stdio transport for communication. Handle MCP protocol messages and route to appropriate tools. Implement proper error handling and logging for MCP operations. Create src/index.ts as entry point to start both MCP server and webhook Express server.",
+        "testStrategy": "Integration tests for MCP protocol communication. Test tool registration and execution. Verify stdio transport functionality. End-to-end testing with MCP client.",
+        "priority": "high",
+        "dependencies": [
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Create Jenkins Configuration Setup",
+        "description": "Implement Jenkins client configuration and create comprehensive documentation for Jenkins setup requirements",
+        "details": "Implement src/config/jenkins.ts to configure Jenkins client with URL, authentication, and connection settings. Create docs/JENKINS-SETUP.md with detailed instructions for Jenkins webhook plugin installation, webhook configuration for job completion notifications, API token setup, and required job parameter documentation. Include webhook URL configuration and authentication setup.",
+        "testStrategy": "Validate Jenkins client configuration with different authentication methods. Verify documentation completeness and accuracy. Test connection to Jenkins instance.",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Implement Docker Configuration and Documentation",
+        "description": "Create Docker configuration, comprehensive testing suite, and complete project documentation",
+        "details": "Create Dockerfile with multi-stage builds for production optimization. Implement docker-compose.yml with Jenkins MCP Server, Redis, and network configuration. Create comprehensive test suite in tests/ directory with unit tests for all services, integration tests for MCP communication and Jenkins API, and fixtures for test data. Create docs/README.md with installation, configuration, and usage instructions. Create docs/MCP-TOOLS.md documenting all MCP tools, their schemas, and usage examples.",
+        "testStrategy": "Docker build and container startup tests. Full test suite execution with coverage reporting. Documentation review for completeness and accuracy. End-to-end integration testing in Docker environment.",
+        "priority": "medium",
+        "dependencies": [
+          8,
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-08-06T21:43:26.977Z",
+      "updated": "2025-08-09T12:46:32.954Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
