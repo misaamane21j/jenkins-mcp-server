@@ -1,22 +1,26 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { logger } from '../utils/logger';
 import { TriggerJobTool } from './tools/trigger-job';
 import { JobStatusTool } from './tools/job-status';
 import { ListJobsTool } from './tools/list-jobs';
+import { GetJobParametersTool } from './tools/get-job-parameters';
 
 export class MCPServerService {
   private triggerJobTool: TriggerJobTool;
   private jobStatusTool: JobStatusTool;
   private listJobsTool: ListJobsTool;
+  private getJobParametersTool: GetJobParametersTool;
 
   constructor(private server: Server) {
     this.triggerJobTool = new TriggerJobTool();
     this.jobStatusTool = new JobStatusTool();
     this.listJobsTool = new ListJobsTool();
+    this.getJobParametersTool = new GetJobParametersTool();
   }
 
   async initialize(): Promise<void> {
-    this.server.setRequestHandler('tools/list', async () => {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
         tools: [
           {
@@ -63,11 +67,22 @@ export class MCPServerService {
               },
             },
           },
+          {
+            name: 'get_job_parameters',
+            description: 'Get parameter definitions for a Jenkins job',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                jobName: { type: 'string', description: 'Name of the Jenkins job' },
+              },
+              required: ['jobName'],
+            },
+          },
         ],
       };
     });
 
-    this.server.setRequestHandler('tools/call', async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
 
       switch (name) {
@@ -77,6 +92,8 @@ export class MCPServerService {
           return await this.jobStatusTool.execute(args);
         case 'list_jenkins_jobs':
           return await this.listJobsTool.execute(args);
+        case 'get_job_parameters':
+          return await this.getJobParametersTool.execute(args);
         default:
           throw new Error(`Unknown tool: ${name}`);
       }

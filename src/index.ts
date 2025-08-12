@@ -4,7 +4,7 @@ import express from 'express';
 import { config } from './config/environment';
 import { logger } from './utils/logger';
 import { MCPServerService } from './server/mcp-server';
-import { WebhookHandlerService } from './services/webhook-handler';
+import { WebhookHandler } from './services/webhook-handler';
 
 async function main() {
   try {
@@ -23,16 +23,13 @@ async function main() {
     const transport = new StdioServerTransport();
     await server.connect(transport);
 
-    const app = express();
-    const webhookHandler = new WebhookHandlerService();
+    // For the webhook handler, we need to create the job tracker dependency
+    const { JobTrackerService } = await import('./services/job-tracker');
+    const jobTracker = new JobTrackerService();
+    await jobTracker.initialize();
     
-    app.use(express.json());
-    app.post('/webhook/jenkins', webhookHandler.handleJenkinsWebhook.bind(webhookHandler));
-    app.get('/health', (req, res) => res.json({ status: 'healthy' }));
-    
-    app.listen(config.webhook.port, () => {
-      logger.info(`Webhook server started on port ${config.webhook.port}`);
-    });
+    const webhookHandler = new WebhookHandler(jobTracker);
+    await webhookHandler.start();
 
     logger.info('Jenkins MCP Server initialized');
   } catch (error) {

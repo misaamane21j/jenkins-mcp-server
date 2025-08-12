@@ -1,5 +1,6 @@
 import { JenkinsClientService } from '../../services/jenkins-client';
 import { logger } from '../../utils/logger';
+import { validateInput, listJobsSchema, ListJobsInput } from '../../utils/validation';
 
 export class ListJobsTool {
   private jenkinsClient: JenkinsClientService;
@@ -10,7 +11,7 @@ export class ListJobsTool {
 
   async execute(args: any): Promise<any> {
     try {
-      const { filter, includeDisabled = false } = args;
+      const { filter, includeDisabled = false } = validateInput<ListJobsInput>(listJobsSchema, args);
 
       logger.info('Listing Jenkins jobs', { filter, includeDisabled });
 
