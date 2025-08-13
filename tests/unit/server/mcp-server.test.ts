@@ -63,7 +63,7 @@ describe('MCPServerService', () => {
     it('should set up request handlers', async () => {
       await mcpService.initialize();
 
-      expect(mockServer.setRequestHandler).toHaveBeenCalledTimes(2);
+      expect(mockServer.setRequestHandler).toHaveBeenCalledTimes(3);
     });
 
     it('should create all tool instances on construction', () => {
@@ -81,12 +81,13 @@ describe('MCPServerService', () => {
 
     it('should have handlers set up for MCP protocol', () => {
       // Verify that the handlers were set up
-      expect(mockServer.setRequestHandler).toHaveBeenCalledTimes(2);
+      expect(mockServer.setRequestHandler).toHaveBeenCalledTimes(3);
       
-      // Check that both handlers are functions
+      // Check that all handlers are functions
       const calls = mockServer.setRequestHandler.mock.calls;
       expect(typeof calls[0][1]).toBe('function'); // ListTools handler
       expect(typeof calls[1][1]).toBe('function'); // CallTool handler
+      expect(typeof calls[2][1]).toBe('function'); // Ping handler
     });
 
     it('should execute tools when called through handlers', async () => {
