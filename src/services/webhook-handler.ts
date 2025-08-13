@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
+import { Server } from 'http';
 import { validateInput, WebhookPayload, webhookPayloadSchema } from '../utils/validation';
 import { handleError, formatMCPError, WebhookError } from '../utils/error-handler';
 import { logger } from '../utils/logger';
@@ -24,6 +25,7 @@ export interface SlackNotificationPayload {
 export class WebhookHandler {
   private app: express.Application;
   private jobTracker: JobTrackerService;
+  private server: Server | null = null;
 
   constructor(jobTracker: JobTrackerService) {
     this.app = express();
@@ -315,7 +317,7 @@ export class WebhookHandler {
     const port = config.webhook.port;
     
     return new Promise((resolve, reject) => {
-      const server = this.app.listen(port, () => {
+      this.server = this.app.listen(port, () => {
         logger.info('Webhook handler started', {
           port,
           endpoints: ['/health', '/tools', '/webhook/jenkins']
@@ -323,9 +325,29 @@ export class WebhookHandler {
         resolve();
       });
 
-      server.on('error', (error) => {
+      this.server.on('error', (error: Error) => {
         logger.error('Webhook handler failed to start', { error });
         reject(error);
+      });
+    });
+  }
+
+  public async stop(): Promise<void> {
+    if (!this.server) {
+      logger.warn('Webhook handler server is not running');
+      return;
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      this.server!.close((error?: Error) => {
+        if (error) {
+          logger.error('Error stopping webhook handler', { error });
+          reject(error);
+        } else {
+          logger.info('Webhook handler stopped');
+          this.server = null;
+          resolve();
+        }
       });
     });
   }

@@ -105,7 +105,61 @@
           7
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up MCP Server Foundation",
+            "description": "Create the main MCP server class structure and initialize stdio transport",
+            "dependencies": [],
+            "details": "Implement src/server/mcp-server.ts with basic MCP server setup using @modelcontextprotocol/sdk. Initialize stdio transport for communication. Set up server constructor with proper configuration and error handling. Create basic server lifecycle methods (start, stop).\n<info added on 2025-08-12T22:27:40.136Z>\nSuccessfully completed MCP server foundation setup with comprehensive enhancements. Enhanced MCPServerService class with proper initialization state tracking, comprehensive error handling for both tool registration and execution, graceful shutdown capabilities, and improved lifecycle management. Added server.stop() method with proper cleanup. Updated WebhookHandler to include stop() method for graceful shutdown. Enhanced main index.ts with signal handling for SIGINT/SIGTERM/SIGQUIT, proper error boundaries, and cleanup processes. All TypeScript compilation issues resolved and all 171 tests passing.\n</info added on 2025-08-12T22:27:40.136Z>",
+            "status": "done",
+            "testStrategy": "Unit tests for server initialization and transport setup. Test server start/stop lifecycle methods."
+          },
+          {
+            "id": 2,
+            "title": "Implement Tool Registration System",
+            "description": "Create the system to register all four MCP tools with their schemas",
+            "dependencies": [
+              "8.1"
+            ],
+            "details": "Register trigger_jenkins_job, get_job_status, list_jenkins_jobs, and get_job_parameters tools in the MCP server. Define tool schemas and metadata. Create tool registry system that maps tool names to their implementations. Ensure proper schema validation for each tool.\n<info added on 2025-08-13T21:15:32.073Z>\nImplementation completed successfully. Created MCPToolRegistry class in src/server/tool-registry.ts with comprehensive tool lifecycle management including registration, validation, unregistration, and statistics tracking. Implemented robust schema validation with detailed error checking for tool names, descriptions, inputSchema structure, and required field consistency. Created centralized tool schemas in src/server/tool-schemas.ts with comprehensive documentation for all four Jenkins tools (trigger_jenkins_job, get_job_status, list_jenkins_jobs, get_job_parameters). Refactored MCPServerService to utilize the registry system, removing hardcoded tool definitions and enabling dynamic tool management. Updated CallTool and ListTools handlers to leverage the registry for improved maintainability and error handling. Added comprehensive unit tests in tests/unit/server/ covering all registry functionality, schema validation edge cases, and error scenarios. All 197 tests passing with robust error handling and detailed logging throughout the implementation.\n</info added on 2025-08-13T21:15:32.073Z>",
+            "status": "done",
+            "testStrategy": "Unit tests for tool registration. Verify all tools are properly registered with correct schemas and metadata."
+          },
+          {
+            "id": 3,
+            "title": "Implement MCP Protocol Message Handling",
+            "description": "Handle incoming MCP protocol messages and route them to appropriate tools",
+            "dependencies": [
+              "8.2"
+            ],
+            "details": "Implement message handlers for MCP protocol requests. Route tool execution requests to the appropriate tool implementations. Handle tool calls with parameter validation and response formatting. Implement proper message acknowledgment and error responses.",
+            "status": "pending",
+            "testStrategy": "Integration tests for MCP protocol communication. Test message routing to different tools. Verify proper request/response handling."
+          },
+          {
+            "id": 4,
+            "title": "Add Error Handling and Logging",
+            "description": "Implement comprehensive error handling and logging for MCP operations",
+            "dependencies": [
+              "8.3"
+            ],
+            "details": "Add error handling for tool execution failures, invalid requests, and communication errors. Implement structured logging for MCP operations using the existing logger service. Create error response formatting that follows MCP protocol standards. Add request/response logging for debugging.",
+            "status": "pending",
+            "testStrategy": "Unit tests for error scenarios. Test error response formatting. Verify logging output for various operation types."
+          },
+          {
+            "id": 5,
+            "title": "Create Entry Point and Server Integration",
+            "description": "Implement src/index.ts to start both MCP server and webhook Express server",
+            "dependencies": [
+              "8.4"
+            ],
+            "details": "Create src/index.ts as the main entry point that starts both the MCP server and the existing webhook Express server. Implement proper process signal handling for graceful shutdown. Coordinate startup and shutdown of both servers. Add environment-based configuration for different startup modes.",
+            "status": "pending",
+            "testStrategy": "Integration tests for complete server startup. Test graceful shutdown scenarios. Verify both MCP and webhook servers start correctly together."
+          }
+        ]
       },
       {
         "id": 9,
@@ -137,7 +191,7 @@
     ],
     "metadata": {
       "created": "2025-08-06T21:43:26.977Z",
-      "updated": "2025-08-12T09:22:21.301Z",
+      "updated": "2025-08-13T21:15:11.964Z",
       "description": "Tasks for master context"
     }
   }
