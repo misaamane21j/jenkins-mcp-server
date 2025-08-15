@@ -7,6 +7,7 @@ import {
   NotificationSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import { logger } from '../utils/logger';
+import { handleError, formatMCPError, MCPError, AppError } from '../utils/error-handler';
 import { MCPToolRegistry } from './tool-registry';
 import { allToolSchemas } from './tool-schemas';
 import { TriggerJobTool } from './tools/trigger-job';
@@ -106,7 +107,8 @@ export class MCPServerService {
         };
       } catch (error) {
         logger.error('Error handling ListTools request:', error);
-        throw this.createMCPError(-32603, 'Internal error listing tools', error);
+        const handledError = handleError(error, 'ListTools request handler');
+        throw this.createMCPError(-32603, 'Internal error listing tools', handledError);
       }
     });
 
@@ -127,14 +129,16 @@ export class MCPServerService {
           const registeredTools = this.toolRegistry.getRegisteredToolNames();
           const errorMsg = `Unknown tool: ${name}. Available tools: ${registeredTools.join(', ')}`;
           logger.warn(errorMsg, { requestedTool: name, availableTools: registeredTools });
-          throw this.createMCPError(-32601, errorMsg);
+          const mcpError = new MCPError(errorMsg, 'TOOL_NOT_FOUND');
+          throw this.createMCPErrorFromAppError(-32601, mcpError);
         }
 
         // Validate arguments if provided
         if (args && typeof args !== 'object') {
           const errorMsg = 'Tool arguments must be an object';
           logger.warn(errorMsg, { toolName: name, argsType: typeof args });
-          throw this.createMCPError(-32602, errorMsg);
+          const mcpError = new MCPError(errorMsg, 'INVALID_ARGUMENTS');
+          throw this.createMCPErrorFromAppError(-32602, mcpError);
         }
 
         // Execute tool with request tracking
@@ -159,12 +163,15 @@ export class MCPServerService {
           executionTimeMs: executionTime
         });
 
-        // Re-throw MCP errors as-is, wrap others
+        // Handle the error using our comprehensive error handler
+        const handledError = handleError(error, `tool execution for '${name}'`);
+        
+        // Re-throw MCP errors with proper codes, wrap others
         if (this.isMCPError(error)) {
           throw error;
         }
         
-        throw this.createMCPError(-32603, `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`, error);
+        throw this.createMCPErrorFromAppError(-32603, handledError);
       }
     });
 
@@ -175,7 +182,8 @@ export class MCPServerService {
         return {}; // Empty response indicates successful ping
       } catch (error) {
         logger.error('Error handling Ping request:', error);
-        throw this.createMCPError(-32603, 'Internal error handling ping', error);
+        const handledError = handleError(error, 'Ping request handler');
+        throw this.createMCPError(-32603, 'Internal error handling ping', handledError);
       }
     });
 
@@ -196,16 +204,35 @@ export class MCPServerService {
   }
 
   /**
-   * Create a standardized MCP error response
+   * Create a standardized MCP error response from an AppError
+   */
+  private createMCPErrorFromAppError(code: number, appError: AppError): Error {
+    const error = new Error(appError.message);
+    (error as any).code = code;
+    (error as any).data = appError.toJSON();
+    return error;
+  }
+
+  /**
+   * Create a standardized MCP error response (backward compatibility)
    */
   private createMCPError(code: number, message: string, originalError?: any): Error {
     const error = new Error(message);
     (error as any).code = code;
-    (error as any).data = originalError instanceof Error ? {
-      type: originalError.constructor.name,
-      message: originalError.message,
-      stack: originalError.stack
-    } : originalError;
+    
+    // Use our error handler to get better error formatting
+    if (originalError && originalError instanceof AppError) {
+      (error as any).data = originalError.toJSON();
+    } else if (originalError instanceof Error) {
+      (error as any).data = {
+        type: originalError.constructor.name,
+        message: originalError.message,
+        stack: originalError.stack
+      };
+    } else {
+      (error as any).data = originalError;
+    }
+    
     return error;
   }
 

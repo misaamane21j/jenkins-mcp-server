@@ -1,6 +1,7 @@
 import { JenkinsClientService } from '../../services/jenkins-client';
 import { logger } from '../../utils/logger';
 import { validateInput, jobStatusSchema, JobStatusInput } from '../../utils/validation';
+import { handleError, formatMCPError } from '../../utils/error-handler';
 
 export class JobStatusTool {
   private jenkinsClient: JenkinsClientService;
@@ -30,7 +31,27 @@ export class JobStatusTool {
       };
     } catch (error) {
       logger.error('Failed to get job status:', error);
-      throw error;
+      
+      // Use comprehensive error handling
+      const handledError = handleError(error, 'get job status');
+      
+      // Format as MCP error response for consistency
+      const mcpErrorResponse = formatMCPError(handledError);
+      
+      // Return error in MCP format instead of throwing to allow client to handle gracefully
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              error: true,
+              message: handledError.message,
+              errorType: handledError instanceof Error ? handledError.constructor.name : 'UnknownError',
+              details: mcpErrorResponse.error.details
+            })
+          }
+        ]
+      };
     }
   }
 }

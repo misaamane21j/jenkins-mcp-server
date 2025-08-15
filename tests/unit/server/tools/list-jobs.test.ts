@@ -125,7 +125,10 @@ describe('ListJobsTool', () => {
         filter: ''  // Empty string not allowed
       };
 
-      await expect(tool.execute(invalidArgs)).rejects.toThrow(ValidationError);
+      const result = await tool.execute(invalidArgs);
+      const errorResponse = JSON.parse(result.content[0].text);
+      expect(errorResponse.error).toBe(true);
+      expect(errorResponse.message).toContain('validation failed');
     });
 
     it('should validate filter parameter maximum length', async () => {
@@ -133,7 +136,10 @@ describe('ListJobsTool', () => {
         filter: 'a'.repeat(101)  // Exceeds 100 character limit
       };
 
-      await expect(tool.execute(invalidArgs)).rejects.toThrow(ValidationError);
+      const result = await tool.execute(invalidArgs);
+      const errorResponse = JSON.parse(result.content[0].text);
+      expect(errorResponse.error).toBe(true);
+      expect(errorResponse.message).toContain('validation failed');
     });
 
     it('should validate includeDisabled parameter type', async () => {
@@ -152,7 +158,10 @@ describe('ListJobsTool', () => {
     it('should handle Jenkins client errors', async () => {
       mockJenkinsInstance.listJobs.mockRejectedValue(new Error('Connection failed'));
 
-      await expect(tool.execute({})).rejects.toThrow('Connection failed');
+      const result = await tool.execute({});
+      const errorResponse = JSON.parse(result.content[0].text);
+      expect(errorResponse.error).toBe(true);
+      expect(errorResponse.message).toContain('Connection failed');
     });
 
     it('should handle empty job list', async () => {

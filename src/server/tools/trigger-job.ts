@@ -2,6 +2,7 @@ import { JenkinsClientService } from '../../services/jenkins-client';
 import { JobTrackerService } from '../../services/job-tracker';
 import { logger } from '../../utils/logger';
 import { validateInput, triggerJobSchema, TriggerJobInput } from '../../utils/validation';
+import { handleError, formatMCPError } from '../../utils/error-handler';
 
 export class TriggerJobTool {
   private jenkinsClient: JenkinsClientService;
@@ -45,7 +46,27 @@ export class TriggerJobTool {
       };
     } catch (error) {
       logger.error('Failed to trigger Jenkins job:', error);
-      throw error;
+      
+      // Use comprehensive error handling
+      const handledError = handleError(error, 'trigger Jenkins job');
+      
+      // Format as MCP error response for consistency
+      const mcpErrorResponse = formatMCPError(handledError);
+      
+      // Return error in MCP format instead of throwing to allow client to handle gracefully
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              error: true,
+              message: handledError.message,
+              errorType: handledError instanceof Error ? handledError.constructor.name : 'UnknownError',
+              details: mcpErrorResponse.error.details
+            })
+          }
+        ]
+      };
     }
   }
 }

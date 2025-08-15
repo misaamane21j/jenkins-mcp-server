@@ -4,8 +4,15 @@
       "Bash(git add:*)",
       "Bash(task-master:*)",
       "Bash(npm test:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "mcp__task-master-ai__next_task",
+      "mcp__task-master-ai__set_task_status"
     ],
     "deny": []
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "task-master-ai",
+    "context7"
+  ]
 }
