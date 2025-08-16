@@ -1,5 +1,4 @@
 import Joi from 'joi';
-import { JenkinsConfigOptions } from '../config/jenkins';
 
 // Schema for Jenkins configuration validation
 export const jenkinsConfigSchema = Joi.object({
@@ -46,7 +45,7 @@ export const jenkinsConfigSchema = Joi.object({
 // Schema for Jenkins job trigger parameters
 export const triggerJobSchema = Joi.object({
   jobName: Joi.string().required().min(1).max(255)
-    .pattern(/^[a-zA-Z0-9_\-\/]+$/)
+    .pattern(/^[a-zA-Z0-9_\-/]+$/)
     .messages({
       'string.pattern.base': 'Job name can only contain letters, numbers, underscores, hyphens, and forward slashes',
       'string.empty': 'Job name is required',
@@ -64,7 +63,7 @@ export const triggerJobSchema = Joi.object({
   
   callbackInfo: Joi.object({
     slackChannel: Joi.string().required().min(1).max(100)
-      .pattern(/^#[a-zA-Z0-9_\-]+$/)
+      .pattern(/^#[a-zA-Z0-9_-]+$/)
       .messages({
         'string.pattern.base': 'Slack channel must start with # and contain only letters, numbers, underscores, and hyphens'
       }),
@@ -86,7 +85,7 @@ export const triggerJobSchema = Joi.object({
 // Schema for job status query
 export const jobStatusSchema = Joi.object({
   jobName: Joi.string().required().min(1).max(255)
-    .pattern(/^[a-zA-Z0-9_\-\/]+$/)
+    .pattern(/^[a-zA-Z0-9_\-/]+$/)
     .messages({
       'string.pattern.base': 'Job name can only contain letters, numbers, underscores, hyphens, and forward slashes'
     }),
@@ -110,7 +109,7 @@ export const listJobsSchema = Joi.object({
 // Schema for getting job parameters
 export const jobParametersSchema = Joi.object({
   jobName: Joi.string().required().min(1).max(255)
-    .pattern(/^[a-zA-Z0-9_\-\/]+$/)
+    .pattern(/^[a-zA-Z0-9_\-/]+$/)
     .messages({
       'string.pattern.base': 'Job name can only contain letters, numbers, underscores, hyphens, and forward slashes'
     })

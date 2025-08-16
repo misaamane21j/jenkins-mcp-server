@@ -151,7 +151,7 @@ export class JenkinsClientService {
         if (queueItem.executable) {
           return queueItem.executable.number;
         }
-      } catch (error) {
+      } catch {
         // Queue item might not be available yet
       }
       

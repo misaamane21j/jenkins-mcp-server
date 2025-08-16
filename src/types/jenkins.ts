@@ -31,5 +31,5 @@ export interface JobTrackingInfo {
   };
   status: string;
   timestamp: number;
-  details?: any;
+  details?: unknown;
 }

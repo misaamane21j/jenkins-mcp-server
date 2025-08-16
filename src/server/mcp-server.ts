@@ -2,12 +2,15 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { 
   ListToolsRequestSchema, 
   CallToolRequestSchema,
-  InitializeRequestSchema,
-  PingRequestSchema,
-  NotificationSchema
+  PingRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import { logger } from '../utils/logger';
-import { handleError, formatMCPError, MCPError, AppError } from '../utils/error-handler';
+import { handleError, MCPError, AppError } from '../utils/error-handler';
+
+interface MCPErrorResponse extends Error {
+  code: number;
+  data?: unknown;
+}
 import { MCPToolRegistry } from './tool-registry';
 import { allToolSchemas } from './tool-schemas';
 import { TriggerJobTool } from './tools/trigger-job';
@@ -95,7 +98,7 @@ export class MCPServerService {
    */
   private setupMessageHandlers(): void {
     // Handle ListTools requests
-    this.server.setRequestHandler(ListToolsRequestSchema, async (request) => {
+    this.server.setRequestHandler(ListToolsRequestSchema, async (_request) => {
       try {
         logger.debug('Handling ListTools request');
         
@@ -176,7 +179,7 @@ export class MCPServerService {
     });
 
     // Handle Ping requests for connection health monitoring
-    this.server.setRequestHandler(PingRequestSchema, async (request) => {
+    this.server.setRequestHandler(PingRequestSchema, async (_request) => {
       try {
         logger.debug('Handling Ping request');
         return {}; // Empty response indicates successful ping
@@ -206,31 +209,31 @@ export class MCPServerService {
   /**
    * Create a standardized MCP error response from an AppError
    */
-  private createMCPErrorFromAppError(code: number, appError: AppError): Error {
-    const error = new Error(appError.message);
-    (error as any).code = code;
-    (error as any).data = appError.toJSON();
+  private createMCPErrorFromAppError(code: number, appError: AppError): MCPErrorResponse {
+    const error = new Error(appError.message) as MCPErrorResponse;
+    error.code = code;
+    error.data = appError.toJSON();
     return error;
   }
 
   /**
    * Create a standardized MCP error response (backward compatibility)
    */
-  private createMCPError(code: number, message: string, originalError?: any): Error {
-    const error = new Error(message);
-    (error as any).code = code;
+  private createMCPError(code: number, message: string, originalError?: unknown): MCPErrorResponse {
+    const error = new Error(message) as MCPErrorResponse;
+    error.code = code;
     
     // Use our error handler to get better error formatting
     if (originalError && originalError instanceof AppError) {
-      (error as any).data = originalError.toJSON();
+      error.data = originalError.toJSON();
     } else if (originalError instanceof Error) {
-      (error as any).data = {
+      error.data = {
         type: originalError.constructor.name,
         message: originalError.message,
         stack: originalError.stack
       };
     } else {
-      (error as any).data = originalError;
+      error.data = originalError;
     }
     
     return error;
@@ -239,8 +242,8 @@ export class MCPServerService {
   /**
    * Check if an error is already an MCP error
    */
-  private isMCPError(error: any): boolean {
-    return error && typeof error.code === 'number';
+  private isMCPError(error: unknown): error is MCPErrorResponse {
+    return error instanceof Error && 'code' in error && typeof (error as MCPErrorResponse).code === 'number';
   }
 
   async stop(): Promise<void> {

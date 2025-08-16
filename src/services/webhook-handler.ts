@@ -64,7 +64,7 @@ export class WebhookHandler {
 
   private setupErrorHandling(): void {
     // Global error handler
-    this.app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    this.app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
       const handledError = handleError(err, 'webhook handler');
       const mcpError = formatMCPError(handledError);
       

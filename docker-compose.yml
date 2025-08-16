@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  jenkins-mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: jenkins-mcp-server
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - JENKINS_URL=${JENKINS_URL}
+      - JENKINS_USERNAME=${JENKINS_USERNAME}
+      - JENKINS_PASSWORD=${JENKINS_PASSWORD}
+      - JENKINS_API_TOKEN=${JENKINS_API_TOKEN}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - WEBHOOK_PORT=3001
+      - REDIS_URL=redis://redis:6379
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - MCP_SERVER_NAME=${MCP_SERVER_NAME:-jenkins-mcp-server}
+      - MCP_SERVER_VERSION=${MCP_SERVER_VERSION:-1.0.0}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - jenkins-mcp-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  jenkins-mcp-server-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: jenkins-mcp-server-dev
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - JENKINS_URL=${JENKINS_URL}
+      - JENKINS_USERNAME=${JENKINS_USERNAME}
+      - JENKINS_PASSWORD=${JENKINS_PASSWORD}
+      - JENKINS_API_TOKEN=${JENKINS_API_TOKEN}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - WEBHOOK_PORT=3001
+      - REDIS_URL=redis://redis:6379
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+      - MCP_SERVER_NAME=${MCP_SERVER_NAME:-jenkins-mcp-server-dev}
+      - MCP_SERVER_VERSION=${MCP_SERVER_VERSION:-1.0.0-dev}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - jenkins-mcp-network
+    volumes:
+      - .:/app
+      - /app/node_modules
+    profiles:
+      - development
+
+  redis:
+    image: redis:7-alpine
+    container_name: jenkins-mcp-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - jenkins-mcp-network
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    command: redis-server --appendonly yes
+
+networks:
+  jenkins-mcp-network:
+    driver: bridge
+    name: jenkins-mcp-network
+
+volumes:
+  redis_data:
+    driver: local

@@ -8,7 +8,7 @@ export interface JenkinsWebhookPayload {
     timestamp: number;
     duration: number;
     result: string;
-    artifacts: any[];
+    artifacts: unknown[];
     log: string;
   };
   number: number;

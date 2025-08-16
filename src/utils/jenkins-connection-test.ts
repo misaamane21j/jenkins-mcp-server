@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import { JenkinsConfigOptions } from '../config/jenkins';
 import { logger } from './logger';
 import { validateInput, jenkinsConfigSchema } from './validation';
@@ -32,7 +32,6 @@ export class JenkinsConnectionTester {
 
   async testConnection(): Promise<ConnectionTestResult> {
     const startTime = Date.now();
-    const errors: string[] = [];
 
     try {
       logger.info('Starting Jenkins connection test...');

@@ -86,7 +86,7 @@ export class JobTrackerService {
     jobName: string,
     buildNumber: number,
     status: string,
-    details?: any
+    details?: unknown
   ): Promise<void> {
     try {
       await this.ensureConnection();
