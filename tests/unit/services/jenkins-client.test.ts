@@ -3,8 +3,22 @@ import { logger } from '../../../src/utils/logger';
 
 // Mock the jenkins package
 jest.mock('jenkins');
-jest.mock('../../../src/config/jenkins');
 jest.mock('../../../src/utils/logger');
+
+// Mock the Jenkins configuration
+jest.mock('../../../src/config/jenkins', () => ({
+  jenkinsConfig: {
+    baseUrl: 'https://test-jenkins.com',
+    crumbIssuer: true,
+    formData: true,
+    promisify: true,
+    timeout: 30000,
+    auth: {
+      username: 'test-user',
+      password: 'test-token',
+    },
+  },
+}));
 
 const mockJenkins = {
   job: {

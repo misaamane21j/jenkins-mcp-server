@@ -1,4 +1,47 @@
 import Joi from 'joi';
+import { JenkinsConfigOptions } from '../config/jenkins';
+
+// Schema for Jenkins configuration validation
+export const jenkinsConfigSchema = Joi.object({
+  baseUrl: Joi.string().uri({ scheme: ['http', 'https'] }).required()
+    .messages({
+      'string.uri': 'Jenkins URL must be a valid HTTP or HTTPS URL',
+      'any.required': 'Jenkins URL is required'
+    }),
+  
+  username: Joi.string().required().min(1).max(100)
+    .messages({
+      'string.empty': 'Jenkins username is required',
+      'string.max': 'Username cannot exceed 100 characters'
+    }),
+  
+  password: Joi.string().optional().min(1)
+    .messages({
+      'string.empty': 'Password cannot be empty if provided'
+    }),
+  
+  apiToken: Joi.string().optional().min(1)
+    .messages({
+      'string.empty': 'API token cannot be empty if provided'
+    }),
+  
+  timeout: Joi.number().integer().positive().optional().default(30000)
+    .messages({
+      'number.positive': 'Timeout must be a positive number'
+    }),
+  
+  crumbIssuer: Joi.boolean().optional().default(true),
+  formData: Joi.boolean().optional().default(true),
+  promisify: Joi.boolean().optional().default(true)
+}).custom((value, helpers) => {
+  // Either password or apiToken must be provided
+  if (!value.password && !value.apiToken) {
+    return helpers.error('custom.authRequired');
+  }
+  return value;
+}).messages({
+  'custom.authRequired': 'Either password or API token must be provided'
+});
 
 // Schema for Jenkins job trigger parameters
 export const triggerJobSchema = Joi.object({
